@@ -21,8 +21,9 @@ use Ad5001\BetterGen\Main;
 use Ad5001\BetterGen\populator\IglooPopulator;
 use Ad5001\BetterGen\generator\BetterNormal;
 use pocketmine\block\Block;
-use pocketmine\level\generator\biome\Biome;
-use pocketmine\level\generator\normal\biome\SnowyBiome;
+use pocketmine\level\biome\Biome;
+use pocketmine\level\biome\SnowyBiome;
+use pocketmine\level\generator\populator\TallGrass;
 
 class BetterIcePlains extends SnowyBiome implements Mountainable {
 
@@ -40,7 +41,7 @@ class BetterIcePlains extends SnowyBiome implements Mountainable {
 		]);
 		if(!\Ad5001\BetterGen\utils\CommonUtils::in_arrayi("Igloos", BetterNormal::$options["delStruct"])) $this->addPopulator(new IglooPopulator ());
 				
-		$tallGrass = Main::isOtherNS() ? new \pocketmine\level\generator\normal\populator\TallGrass() : new \pocketmine\level\generator\populator\TallGrass();
+		$tallGrass = new TallGrass();
 		$tallGrass->setBaseAmount(3);
 		
 		if(!\Ad5001\BetterGen\utils\CommonUtils::in_arrayi("TallGrass", BetterNormal::$options["delStruct"])) $this->addPopulator($tallGrass);

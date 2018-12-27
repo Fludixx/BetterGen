@@ -23,9 +23,9 @@ use Ad5001\BetterGen\populator\BushPopulator;
 use Ad5001\BetterGen\populator\FallenTreePopulator;
 use Ad5001\BetterGen\populator\TreePopulator;
 use Ad5001\BetterGen\generator\BetterNormal;
-use pocketmine\level\generator\biome\Biome;
-use pocketmine\level\generator\normal\biome\ForestBiome;
-
+use pocketmine\level\biome\Biome;
+use pocketmine\level\biome\ForestBiome;
+use pocketmine\level\generator\populator\TallGrass;
 
 class BetterForest extends ForestBiome implements Mountainable {
 	/** @var string[] **/
@@ -66,7 +66,7 @@ class BetterForest extends ForestBiome implements Mountainable {
 		$trees->setBaseAmount((null !== @constant(TreePopulator::$types[$type] . "::maxPerChunk")) ? constant(TreePopulator::$types[$type] . "::maxPerChunk") : 5);
 		if(!\Ad5001\BetterGen\utils\CommonUtils::in_arrayi("Trees", BetterNormal::$options["delStruct"])) $this->addPopulator($trees);
 		
-		$tallGrass = Main::isOtherNS() ? new \pocketmine\level\generator\normal\populator\TallGrass () : new \pocketmine\level\generator\populator\TallGrass();
+		$tallGrass = new TallGrass();
 		$tallGrass->setBaseAmount(3);
 		
 		if(!\Ad5001\BetterGen\utils\CommonUtils::in_arrayi("TallGrass", BetterNormal::$options["delStruct"])) $this->addPopulator($tallGrass);
@@ -100,7 +100,7 @@ class BetterForest extends ForestBiome implements Mountainable {
 		self::$types[] = str_ireplace("tree", "", explode("\\", $treeClass)[count(explode("\\", $treeClass))]) . " Forest";
 		TreePopulator::$types[] = $treeClass;
 		self::$ids[] = Main::SAKURA_FOREST + (count(self::$types) - 2);
-		Main::register(Main::SAKURA_FOREST + (count(self::$types) - 2), new BetterForest(count(self::$types) - 1, $infos));
+		Main::registerBiome(Main::SAKURA_FOREST + (count(self::$types) - 2), new BetterForest(count(self::$types) - 1, $infos));
 		return true;
 	}
 }

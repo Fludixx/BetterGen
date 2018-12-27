@@ -16,7 +16,7 @@
  */
 namespace Ad5001\BetterGen\generator;
 
-use pocketmine\level\generator\biome\Biome;
+use pocketmine\level\biome\Biome;
 use pocketmine\level\generator\biome\BiomeSelector;
 use pocketmine\level\generator\noise\Simplex;
 use pocketmine\utils\Random;
@@ -41,13 +41,9 @@ class BetterBiomeSelector extends BiomeSelector {
 	 * Constructs the class
 	 *
 	 * @param Random $random
-	 * @param callable $lookup
-	 * @param Biome $fallback
 	 */
-	public function __construct(Random $random, callable $lookup, Biome $fallback) {
-		parent::__construct($random, $lookup, $fallback);
-		$this->fallback = $fallback;
-		$this->lookup = $lookup;
+	public function __construct(Random $random) {
+		parent::__construct($random);
 		$this->temperature = new Simplex($random, 2, 1 / 16, 1 / 512);
 		$this->rainfall = new Simplex($random, 2, 1 / 16, 1 / 512);
 	}
@@ -76,7 +72,7 @@ class BetterBiomeSelector extends BiomeSelector {
 	 *
 	 * @param int $x
 	 * @param int $z
-	 * @return void
+	 * @return float|int
 	 */
 	public function getTemperature($x, $z) {
 		return ($this->temperature->noise2D($x, $z, true) + 1) / 2;
@@ -87,7 +83,7 @@ class BetterBiomeSelector extends BiomeSelector {
 	 *
 	 * @param int $x
 	 * @param int $z
-	 * @return void
+	 * @return float|int
 	 */
 	public function getRainfall($x, $z) {
 		return ($this->rainfall->noise2D($x, $z, true) + 1) / 2;
@@ -108,5 +104,49 @@ class BetterBiomeSelector extends BiomeSelector {
 		$biomeId = BetterNormal::getBiome($temperature, $rainfall);
 		$b = (($biomeId instanceof Biome) ? $biomeId : ($this->biomes[$biomeId] ?? $this->fallback));
 		return $b;
+	}
+
+	/**
+	 * Lookup function called by recalculate() to determine the biome to use for this temperature and rainfall.
+	 *
+	 * @param float $temperature
+	 * @param float $rainfall
+	 *
+	 * @return int biome ID 0-255
+	 */
+	protected function lookup(float $temperature, float $rainfall) : int{
+		if($rainfall < 0.25){
+			if($temperature < 0.7){
+				return Biome::OCEAN;
+			}elseif($temperature < 0.85){
+				return Biome::RIVER;
+			}else{
+				return Biome::SWAMP;
+			}
+		}elseif($rainfall < 0.60){
+			if($temperature < 0.25){
+				return Biome::ICE_PLAINS;
+			}elseif($temperature < 0.75){
+				return Biome::PLAINS;
+			}else{
+				return Biome::DESERT;
+			}
+		}elseif($rainfall < 0.80){
+			if($temperature < 0.25){
+				return Biome::TAIGA;
+			}elseif($temperature < 0.75){
+				return Biome::FOREST;
+			}else{
+				return Biome::BIRCH_FOREST;
+			}
+		}else{
+			if($rainfall < 0.25){
+				return Biome::MOUNTAINS;
+			}elseif($rainfall < 0.70){
+				return Biome::SMALL_MOUNTAINS;
+			}else{
+				return Biome::RIVER;
+			}
+		}
 	}
 }

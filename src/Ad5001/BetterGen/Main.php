@@ -29,8 +29,8 @@ use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\event\level\ChunkPopulateEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerInteractEvent;
-use pocketmine\level\generator\biome\Biome;
-use pocketmine\level\generator\Generator;
+use pocketmine\level\biome\Biome;
+use pocketmine\level\generator\GeneratorManager as GM;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\IntTag;
 use pocketmine\nbt\tag\ListTag;
@@ -64,8 +64,7 @@ class Main extends PluginBase implements Listener {
 	 */
 	public function onEnable() {
 		$this->getServer()->getPluginManager()->registerEvents($this, $this);
-		Generator::addGenerator(BetterNormal::class, "betternormal");
-		if ($this->isOtherNS()) $this->getLogger()->warning("Tesseract detected. Note that Tesseract is not up to date with the generation structure and some generation features may be limited or not working");
+		GM::addGenerator(BetterNormal::class, "betternormal");
 		@mkdir(LootTable::getPluginFolder());
 		@mkdir(LootTable::getPluginFolder() . "loots");
 		if (!file_exists(LootTable::getPluginFolder() . "processingLoots.json"))
@@ -104,15 +103,15 @@ class Main extends PluginBase implements Listener {
 						break;
 					case 1 : // /createworld <name>
 						$name = $args[0];
-						$generator = Generator::getGenerator("betternormal");
+						$generator = GM::getGenerator("betternormal");
 						$generatorName = "betternormal";
 						$seed = $this->generateRandomSeed();
 						$options = [];
 						break;
 					case 2 : // /createworld <name> [generator = betternormal]
 						$name = $args[0];
-						$generator = Generator::getGenerator($args[1]);
-						if (Generator::getGeneratorName($generator) !== strtolower($args[1])) {
+						$generator = GM::getGenerator($args[1]);
+						if (GM::getGeneratorName($generator) !== strtolower($args[1])) {
 							$sender->sendMessage(self::PREFIX . "§4Could not find generator {$args[1]}. Are you sure it is registered?");
 							return true;
 						}
@@ -122,8 +121,8 @@ class Main extends PluginBase implements Listener {
 						break;
 					case 3 : // /createworld <name> [generator = betternormal] [seed = rand()]
 						$name = $args[0];
-						$generator = Generator::getGenerator($args[1]);
-						if (Generator::getGeneratorName($generator) !== strtolower($args[1])) {
+						$generator = GM::getGenerator($args[1]);
+						if (GM::getGeneratorName($generator) !== strtolower($args[1])) {
 							$sender->sendMessage(self::PREFIX . "§4Could not find generator {$args[1]}. Are you sure it is registered?");
 							return true;
 						}
@@ -139,8 +138,8 @@ class Main extends PluginBase implements Listener {
 						break;
 					default : // /createworld <name> [generator = betternormal] [seed = rand()] [options(json)]
 						$name = $args[0];
-						$generator = Generator::getGenerator($args[1]);
-						if (Generator::getGeneratorName($generator) !== strtolower($args[1])) {
+						$generator = GM::getGenerator($args[1]);
+						if (GM::getGeneratorName($generator) !== strtolower($args[1])) {
 							$sender->sendMessage(self::PREFIX . "§4Could not find generator {$args[1]}. Are you sure it is registered?");
 							return true;
 						}
@@ -179,7 +178,8 @@ class Main extends PluginBase implements Listener {
 							return false;
 						}
 					}
-					$sender->teleport(\pocketmine\level\Position::fromObject($sender, $this->getServer()->getLevelByName($args[0])));
+					if($sender instanceof Player)
+						$sender->teleport(\pocketmine\level\Position::fromObject($sender, $this->getServer()->getLevelByName($args[0])));
 					$sender->sendMessage("§aTeleporting to {$args[0]}...");
 					return true;
 				} else {
@@ -249,6 +249,7 @@ class Main extends PluginBase implements Listener {
 	 *
 	 * @param PlayerInteractEvent $event
 	 * @return void
+	 * @throws \Exception
 	 */
 	public function onInteract(PlayerInteractEvent $event) {
 		$cfg = new Config(LootTable::getPluginFolder() . "processingLoots.json", Config::JSON);
@@ -272,6 +273,7 @@ class Main extends PluginBase implements Listener {
 	 *
 	 * @param BlockBreakEvent $event
 	 * @return void
+	 * @throws \Exception
 	 */
 	public function onBlockBreak(BlockBreakEvent $event) {
 		$cfg = new Config(LootTable::getPluginFolder() . "processingLoots.json", Config::JSON);

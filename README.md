@@ -1,4 +1,3 @@
-## This repository was moved to [git.ad5001.eu](https://git.ad5001.eu/Ad5001/BetterGen)
 <img src="https://raw.githubusercontent.com/Ad5001/BetterGen/master/imgs/banner.png"></img>     
 <center><h1>PocketMine's Tomorrow's World Generator.</h1></center>
 Welcome user to the home of a new PocketMine World Generator which features 9 new/modified biomes:
@@ -52,3 +51,4 @@ BetterGen wouldn't be here today without the following guys who have made this p
 Ad5001    
 thebigsmileXD    
 wyt3dr4g0n    
+fyvekatz    

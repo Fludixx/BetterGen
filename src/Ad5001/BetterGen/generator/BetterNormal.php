@@ -24,9 +24,9 @@ use Ad5001\BetterGen\biome\BetterMesa;
 use Ad5001\BetterGen\biome\BetterMesaPlains;
 use Ad5001\BetterGen\biome\BetterRiver;
 use Ad5001\BetterGen\biome\Mountainable;
-use Ad5001\BetterGen\Main;
 use Ad5001\BetterGen\populator\CavePopulator;
 use Ad5001\BetterGen\populator\FloatingIslandPopulator;
+use Ad5001\BetterGen\populator\LakePopulator;
 use Ad5001\BetterGen\populator\MineshaftPopulator;
 use Ad5001\BetterGen\populator\RavinePopulator;
 use Ad5001\BetterGen\populator\DungeonPopulator;
@@ -39,12 +39,14 @@ use pocketmine\block\Gravel;
 use pocketmine\block\IronOre;
 use pocketmine\block\LapisOre;
 use pocketmine\block\RedstoneOre;
+use pocketmine\level\biome\Biome;
 use pocketmine\level\ChunkManager;
-use pocketmine\level\generator\biome\Biome;
 use pocketmine\level\generator\Generator;
 use pocketmine\level\generator\noise\Simplex;
-use pocketmine\level\generator\normal\object\OreType as OreType2;
 use pocketmine\level\generator\object\OreType;
+use pocketmine\level\generator\populator\GroundCover;
+use pocketmine\level\generator\populator\Ore;
+use pocketmine\level\generator\populator\Populator;
 use pocketmine\level\Level;
 use pocketmine\math\Vector3;
 use pocketmine\utils\Random;
@@ -93,6 +95,7 @@ class BetterNormal extends Generator {
 	];
 	/** @var int */
 	protected $waterHeight = 63;
+	/** @var Simplex */
 	protected $noiseBase;
 
 	/**
@@ -128,7 +131,7 @@ class BetterNormal extends Generator {
 	 * @param		Random				$random
 	 * @return		void
 	 */
-	public function init(ChunkManager $level, Random $random) {
+	public function init(ChunkManager $level, Random $random) : void {
 		$this->level = $level;
 		$this->random = $random;
 		
@@ -160,10 +163,7 @@ class BetterNormal extends Generator {
 				0.4 
 		]));
 		
-		$this->selector = new BetterBiomeSelector($random, [ 
-				self::class,
-				"getBiome" 
-		], self::getBiome(0, 0));
+		$this->selector = new BetterBiomeSelector($random);
 		
 		foreach(self::$biomes as $rain) {
 			foreach($rain as $biome) {
@@ -173,7 +173,7 @@ class BetterNormal extends Generator {
 		
 		$this->selector->recalculate ();
 		
-		$cover = Main::isOtherNS() ? new \pocketmine\level\generator\normal\populator\GroundCover() : new \pocketmine\level\generator\populator\GroundCover();
+		$cover = new GroundCover();
 		$this->generationPopulators[] = $cover;
 		
 		if(!\Ad5001\BetterGen\utils\CommonUtils::in_arrayi("Lakes", self::$options["delStruct"])) {
@@ -219,18 +219,8 @@ class BetterNormal extends Generator {
 		}
 
 		if(!\Ad5001\BetterGen\utils\CommonUtils::in_arrayi("Ores", self::$options["delStruct"])) {
-			$ores = Main::isOtherNS() ? new \pocketmine\level\generator\normal\populator\Ore() : new \pocketmine\level\generator\populator\Ore();
-			if(Main::isOtherNS()) $ores->setOreTypes([ 
-					new OreType2(new CoalOre (), 20, 16, 0, 128),
-					new OreType2(new IronOre (), 20, 8, 0, 64),
-					new OreType2(new RedstoneOre (), 8, 7, 0, 16),
-					new OreType2(new LapisOre (), 1, 6, 0, 32),
-					new OreType2(new GoldOre (), 2, 8, 0, 32),
-					new OreType2(new DiamondOre (), 1, 7, 0, 16),
-					new OreType2(new Dirt (), 20, 32, 0, 128),
-					new OreType2(new Gravel (), 10, 16, 0, 128) 
-			]);
-			if(!Main::isOtherNS()) $ores->setOreTypes([ 
+			$ores = new Ore();
+			$ores->setOreTypes([
 					new OreType(new CoalOre (), 20, 16, 0, 128),
 					new OreType(new IronOre (), 20, 8, 0, 64),
 					new OreType(new RedstoneOre (), 8, 7, 0, 16),
@@ -261,38 +251,49 @@ class BetterNormal extends Generator {
 		self::$biomeById[$biome->getId()] = $biome;
 		return true;
 	}
-	
+
 	/**
 	 * Returns a biome by temperature
-	 * 
+	 *
 	 * @param $temperature float
 	 * @param $rainfall float
+	 * @return Biome
 	 */
 	public static function getBiome($temperature, $rainfall) {
-		$ret = null;
-		if (! isset(self::$biomes[( string) round($rainfall, 1)])) {
-			while(! isset(self::$biomes[( string) round($rainfall, 1)])) {
-				if (abs($rainfall - round($rainfall, 1)) >= 0.05)
-					$rainfall += 0.1;
-				if (abs($rainfall - round($rainfall, 1)) < 0.05)
-					$rainfall -= 0.1;
-				if (round($rainfall, 1) < 0)
-					$rainfall = 0;
-				if (round($rainfall, 1) >= 0.9)
-					$rainfall = 0.9;
+		if($rainfall < 0.25){
+			if($temperature < 0.7){
+				$id = Biome::OCEAN;
+			}elseif($temperature < 0.85){
+				$id = Biome::RIVER;
+			}else{
+				$id = Biome::SWAMP;
+			}
+		}elseif($rainfall < 0.60){
+			if($temperature < 0.25){
+				$id = Biome::ICE_PLAINS;
+			}elseif($temperature < 0.75){
+				$id = Biome::PLAINS;
+			}else{
+				$id = Biome::DESERT;
+			}
+		}elseif($rainfall < 0.80){
+			if($temperature < 0.25){
+				$id = Biome::TAIGA;
+			}elseif($temperature < 0.75){
+				$id = Biome::FOREST;
+			}else{
+				$id = Biome::BIRCH_FOREST;
+			}
+		}else{
+			if($rainfall < 0.25){
+				$id = Biome::MOUNTAINS;
+			}elseif($rainfall < 0.70){
+				$id = Biome::SMALL_MOUNTAINS;
+			}else{
+				$id = Biome::RIVER;
 			}
 		}
-		$b = self::$biomes[( string) round($rainfall, 1)];
-		foreach($b as $t => $biome) {
-			if ($temperature <= (float) $t) {
-				$ret = $biome;
-				break;
-			}
-		}
-		if (is_string($ret)) {
-			$ret = new $ret ();
-		}
-		return $ret;
+		return Biome::getBiome($id);
 	}
 	
 	/**
@@ -312,11 +313,11 @@ class BetterNormal extends Generator {
 	 * @param int $chunkX
 	 * @param int $chunkZ
 	 */
-	public function generateChunk($chunkX, $chunkZ) {
+	public function generateChunk($chunkX, $chunkZ) : void {
 		
 		$this->random->setSeed(0xdeadbeef ^ ($chunkX << 8) ^ $chunkZ ^ $this->level->getSeed ());
 		
-		$noise = Generator::getFastNoise3D($this->noiseBase, 16, 128, 16, 4, 8, 4, $chunkX * 16, 0, $chunkZ * 16);
+		$noise = $this->noiseBase->getFastNoise3D(16, 128, 16, 4, 8, 4, $chunkX * 16, 0, $chunkZ * 16);
 		
 		$chunk = $this->level->getChunk($chunkX, $chunkZ);
 		
@@ -386,7 +387,7 @@ class BetterNormal extends Generator {
 	 * @param int $chunkZ
 	 * @return void
 	 */
-	public function populateChunk($chunkX, $chunkZ) {
+	public function populateChunk($chunkX, $chunkZ) : void {
 		$this->random->setSeed(0xdeadbeef ^ ($chunkX << 8) ^ $chunkZ ^ $this->level->getSeed ());
 		foreach($this->populators as $populator) {
 			$populator->populate($this->level, $chunkX, $chunkZ, $this->random);

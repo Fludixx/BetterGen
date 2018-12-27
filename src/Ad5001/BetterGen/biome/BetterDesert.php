@@ -23,8 +23,8 @@ use Ad5001\BetterGen\populator\TemplePopulator;
 use Ad5001\BetterGen\populator\WellPopulator;
 use Ad5001\BetterGen\generator\BetterNormal;
 use pocketmine\block\Block;
-use pocketmine\level\generator\biome\Biome;
-use pocketmine\level\generator\normal\biome\SandyBiome;
+use pocketmine\level\biome\Biome;
+use pocketmine\level\biome\SandyBiome;
 
 class BetterDesert extends SandyBiome implements Mountainable {
 
